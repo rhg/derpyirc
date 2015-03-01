@@ -107,10 +107,16 @@ public class CoreFragment extends Fragment {
         // TODO: do stuff
         final Editable text = v.getText();
         Log.d(LOG_TAG, "Text: " + text);
-        final String strText = text.toString();
-        if (strText.startsWith("/")) {
-            final String[] split = strText.split("\\s+");
-            Log.d(LOG_TAG, "Parsed: " + Arrays.toString(split));
-        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final String strText = text.toString();
+                if (strText.startsWith("/")) {
+                    final String[] split = strText.split("\\s+");
+                    Log.d(LOG_TAG, "Parsed: " + Arrays.toString(split));
+                }
+            }
+        }).start();
+
     }
 }

@@ -9,13 +9,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.Persistents;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.rhg135.derpyirc.android.Utils.get;
@@ -72,7 +72,7 @@ public class CoreFragment extends Fragment {
                 return handled;
             }
         });
-        ((Button) rootView.findViewById(R.id.button)).setOnClickListener(new View.OnClickListener() {
+        rootView.findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onSubmit(editText);
@@ -89,7 +89,7 @@ public class CoreFragment extends Fragment {
 
     private void setKey(String key, PersistentMap<String, ?> obj) {
         PersistentMap<String, Object> oldState;
-        boolean set = false;
+        boolean set;
         do {
             oldState = stateRef.get();
             set = stateRef.compareAndSet(oldState, oldState.plus(key, obj));
@@ -103,6 +103,6 @@ public class CoreFragment extends Fragment {
         final Editable text = v.getText();
         Log.d(LOG_TAG, "Text: " + text);
         final String[] split = text.toString().split("\\s+");
-        Log.d(LOG_TAG, "Parsed: " + split);
+        Log.d(LOG_TAG, "Parsed: " + Arrays.toString(split));
     }
 }

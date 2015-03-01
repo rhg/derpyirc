@@ -1,48 +1,25 @@
 package com.rhg135.derpyirc.android;
 
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.github.krukow.clj_ds.PersistentMap;
-import com.github.krukow.clj_ds.Persistents;
-
-import java.util.concurrent.atomic.AtomicReference;
-
 
 public class IRCActivity extends ActionBarActivity {
-
-    private final AtomicReference<PersistentMap<String, Object>> state = new AtomicReference<PersistentMap<String, Object>>(null);
-
     public static final String LOG_TAG = "DerpyIRCMain";
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         setContentView(R.layout.activity_irc);
-        PersistentMap<String, Object> newState;
-
-        // persistence
         if (bundle == null) {
-            newState = Persistents.arrayMap();
-
             // android fragments
+            Log.d(LOG_TAG, "adding CoreFragment");
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new CoreFragment())
                     .commit();
-        } else {
-            // TODO: implement restoring state
-            newState = Persistents.arrayMap();
-            /* PersistentMap<String, Object> savedState = Utils.read(bundle, "state");
-            if (savedState == null) {
-                savedState = Persistents.arrayMap();
-            }
-            state.set(savedState); */
         }
-        // set local state
-        state.set(newState);
-        Log.d(LOG_TAG, "Set new state to: " + newState.toString());
     }
 
 
@@ -66,18 +43,5 @@ public class IRCActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    public PersistentMap<String, Object> getState() {
-        return state.get();
-    }
-
-    public void setKey(String key, Object obj) {
-        PersistentMap<String, Object> oldState;
-        boolean set = false;
-        do {
-            oldState = state.get();
-            set = state.compareAndSet(oldState, oldState.plus(key, obj));
-        } while (!set);
     }
 }

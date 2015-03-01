@@ -13,11 +13,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import static com.rhg135.derpyirc.android.Utils.get;
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.Persistents;
 
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.rhg135.derpyirc.android.Utils.get;
 
 /**
  * Created by rhg135 on 28/02/15.
@@ -25,13 +26,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CoreFragment extends Fragment {
    EditText editText;
     public static final String LOG_TAG = "DerpyIRCCore";
-    protected final AtomicReference<PersistentMap<String, PersistentMap<String, ? extends Object>>> stateRef = new AtomicReference(null);
+    protected final AtomicReference<PersistentMap<String, Object>> stateRef = new AtomicReference<>(null);
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle bundle) {
         View rootView = inflater.inflate(R.layout.fragment_irc, container, false);
 
-        PersistentMap<String, PersistentMap<String, ? extends Object>> newState;
+        PersistentMap<String, Object> newState;
 
         // persistence
         if (bundle == null) {
@@ -81,8 +82,18 @@ public class CoreFragment extends Fragment {
 
         return rootView;
     }
-    public PersistentMap<String, PersistentMap<String, ?>> getState() {
+
+    public PersistentMap<String, Object> getState() {
         return stateRef.get();
+    }
+
+    private void setKey(String key, PersistentMap<String, ?> obj) {
+        PersistentMap<String, Object> oldState;
+        boolean set = false;
+        do {
+            oldState = stateRef.get();
+            set = stateRef.compareAndSet(oldState, oldState.plus(key, obj));
+        } while (!set);
     }
     public void connect(long serverID) {
         // TODO: stuff

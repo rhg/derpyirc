@@ -15,11 +15,16 @@ import java.util.Map;
 public class Utils {
     public static final Logger logger = LoggerFactory.getLogger(Utils.class);
 
-    public static Function<PersistentVector, PersistentVector> conjer(final Object v) {
-        return new Function<PersistentVector, PersistentVector>() {
+    public static Function conjer(final String key, final Object v) {
+        return new Function() {
             @Override
-            public PersistentVector apply(PersistentVector input) {
-                return input.plus(v);
+            public Object apply(Object input) {
+                final Object value = ((PersistentMap) input).get(key);
+                if (value != null) {
+                    return ((PersistentVector) value).plus(v);
+                } else {
+                    return null;
+                }
             }
         };
     }

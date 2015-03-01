@@ -16,19 +16,18 @@ import android.widget.TextView;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.Persistents;
-import com.google.common.base.Function;
+import com.rhg135.derpyirc.core.AtomicState;
 import com.rhg135.derpyirc.core.Options;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by rhg135 on 28/02/15.
  */
 public class CoreFragment extends Fragment {
     public static final String LOG_TAG = "DerpyIRCCore";
-    protected final AtomicReference stateRef = new AtomicReference(null);
+    protected final AtomicState state = new AtomicState();
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle bundle) {
@@ -39,7 +38,7 @@ public class CoreFragment extends Fragment {
         // state
         newState = Persistents.arrayMap();
         // set local state
-        stateRef.set(newState);
+        state.set(newState);
         Log.d(LOG_TAG, "Set new state to: " + newState.toString());
 
         // preferences
@@ -83,7 +82,7 @@ public class CoreFragment extends Fragment {
             try {
                 Class klass = Class.forName(plugin);
                 Constructor constructor = klass.getConstructor(PersistentMap.class);
-                constructor.newInstance(stateRef.get());
+                constructor.newInstance(state);
             } catch (NoSuchMethodException e) {
                 Log.e(LOG_TAG, "Plugin: " + plugin + " has invalid constructor", e);
             } catch (Exception e) {
@@ -91,22 +90,6 @@ public class CoreFragment extends Fragment {
             }
         }
         return rootView;
-    }
-
-    private void setKey(String key, Object obj) {
-        PersistentMap oldState;
-        boolean set;
-        do {
-            oldState = (PersistentMap) stateRef.get();
-            set = stateRef.compareAndSet(oldState, oldState.plus(key, obj));
-        } while (!set);
-    }
-
-    private void swap(String key, Function f) {
-        PersistentMap state = (PersistentMap) stateRef.get();
-        if (state != null) {
-            setKey(key, f.apply(state.get(key)));
-        }
     }
     public void connect(long serverID) {
         // TODO: stuff
@@ -118,7 +101,7 @@ public class CoreFragment extends Fragment {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                swap("input.history", Utils.conjer(text));
+                state.swap(Utils.conjer("input.history", text));
                 final String strText = text.toString();
                 if (strText.startsWith("/")) {
                     final String[] split = strText.split("\\s+");

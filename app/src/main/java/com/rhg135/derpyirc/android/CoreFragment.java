@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.Persistents;
+import com.google.common.base.Function;
 import com.rhg135.derpyirc.core.Options;
 
 import java.lang.reflect.Constructor;
@@ -100,6 +101,13 @@ public class CoreFragment extends Fragment {
             set = stateRef.compareAndSet(oldState, oldState.plus(key, obj));
         } while (!set);
     }
+
+    private void swap(String key, Function f) {
+        PersistentMap state = (PersistentMap) stateRef.get();
+        if (state != null) {
+            setKey(key, f.apply(state.get(key)));
+        }
+    }
     public void connect(long serverID) {
         // TODO: stuff
     }
@@ -110,6 +118,7 @@ public class CoreFragment extends Fragment {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                swap("input.history", Utils.conjer(text));
                 final String strText = text.toString();
                 if (strText.startsWith("/")) {
                     final String[] split = strText.split("\\s+");

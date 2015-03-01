@@ -1,6 +1,8 @@
 package com.rhg135.derpyirc.android;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.util.Log;
@@ -14,19 +16,18 @@ import android.widget.TextView;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.Persistents;
+import com.rhg135.derpyirc.core.Options;
 
+import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.rhg135.derpyirc.android.Utils.get;
 
 /**
  * Created by rhg135 on 28/02/15.
  */
 public class CoreFragment extends Fragment {
-   EditText editText;
     public static final String LOG_TAG = "DerpyIRCCore";
-    protected final AtomicReference<PersistentMap<String, Object>> stateRef = new AtomicReference<>(null);
+    protected final AtomicReference stateRef = new AtomicReference(null);
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle bundle) {
@@ -34,28 +35,20 @@ public class CoreFragment extends Fragment {
 
         PersistentMap<String, Object> newState;
 
-        // persistence
-        if (bundle == null) {
-            // default new state
-            newState = Persistents.arrayMap();
-        } else {
-            // TODO: implement restoring state
-            newState = Persistents.arrayMap();
-            /* PersistentMap<String, Object> savedState = Utils.read(bundle, "state");
-            if (savedState == null) {
-                savedState = Persistents.arrayMap();
-            }
-            state.set(savedState); */
-        }
+        // state
+        newState = Persistents.arrayMap();
         // set local state
         stateRef.set(newState);
         Log.d(LOG_TAG, "Set new state to: " + newState.toString());
 
+        // preferences
+        // NOTE: is this the correct Context?
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
         // edit
         final EditText editText = (EditText) rootView.findViewById(R.id.editText);
-        final String imeOptsKey = "config.core.field.ime.options";
         // TODO: this is bad--very bad
-        final Object imeOpts = get(getState(), imeOptsKey, EditorInfo.IME_ACTION_DONE);
+        final Object imeOpts = prefs.getInt(String.valueOf(Options.IME_OPTIONS), EditorInfo.IME_ACTION_SEND);
         /* if (imeOpts == null) {
             imeOpts = EditorInfo.IME_ACTION_DONE;
             parent.setKey(imeOptsKey, imeOpts);
@@ -72,26 +65,38 @@ public class CoreFragment extends Fragment {
                 return handled;
             }
         });
-        rootView.findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onSubmit(editText);
-            }
-        });
-        this.editText = editText;
+        final View sendBtn = rootView.findViewById(R.id.button);
+        if (prefs.getBoolean(String.valueOf(Options.BUTTON_ENABLED), true)) {
+            sendBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    onSubmit(editText);
+                }
+            });
+        } else {
+            sendBtn.setVisibility(View.GONE);
+        }
 
+        // plugins
+        for (String plugin : prefs.getStringSet(String.valueOf(Options.AUTOLOAD_PLUGINS), null)) {
+            try {
+                Class klass = Class.forName(plugin);
+                Constructor constructor = klass.getConstructor(PersistentMap.class);
+                constructor.newInstance(stateRef.get());
+            } catch (NoSuchMethodException e) {
+                Log.e(LOG_TAG, "Plugin: " + plugin + " has invalid constructor", e);
+            } catch (Exception e) {
+                Log.e(LOG_TAG, "Plugin: " + plugin + " failed to load.", e);
+            }
+        }
         return rootView;
     }
 
-    public PersistentMap<String, Object> getState() {
-        return stateRef.get();
-    }
-
-    private void setKey(String key, PersistentMap<String, ?> obj) {
-        PersistentMap<String, Object> oldState;
+    private void setKey(String key, Object obj) {
+        PersistentMap oldState;
         boolean set;
         do {
-            oldState = stateRef.get();
+            oldState = (PersistentMap) stateRef.get();
             set = stateRef.compareAndSet(oldState, oldState.plus(key, obj));
         } while (!set);
     }

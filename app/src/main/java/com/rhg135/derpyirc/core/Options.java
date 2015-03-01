@@ -5,5 +5,6 @@ package com.rhg135.derpyirc.core;
  */
 public enum Options {
     IME_OPTIONS,
-    BUTTON_ENABLED
+    BUTTON_ENABLED,
+    AUTOLOAD_PLUGINS
 }

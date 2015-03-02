@@ -18,6 +18,7 @@ import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.Persistents;
 import com.rhg135.derpyirc.core.AtomicState;
 import com.rhg135.derpyirc.core.Core;
+import com.rhg135.derpyirc.core.Macros;
 import com.rhg135.derpyirc.core.Options;
 
 import java.lang.reflect.Constructor;
@@ -38,6 +39,10 @@ public class CoreFragment extends Fragment {
 
         // state
         newState = Persistents.arrayMap();
+
+        // load macros
+        newState = Macros.loadDebugMacros(newState);
+
         // set local state
         state.set(newState);
         Log.d(LOG_TAG, "Set new state to: " + newState.toString());

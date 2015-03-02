@@ -17,10 +17,11 @@ import android.widget.TextView;
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.Persistents;
 import com.rhg135.derpyirc.core.AtomicState;
+import com.rhg135.derpyirc.core.Core;
 import com.rhg135.derpyirc.core.Options;
 
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
+import java.util.HashSet;
 
 /**
  * Created by rhg135 on 28/02/15.
@@ -78,7 +79,7 @@ public class CoreFragment extends Fragment {
         }
 
         // plugins
-        for (String plugin : prefs.getStringSet(String.valueOf(Options.AUTOLOAD_PLUGINS), null)) {
+        for (String plugin : prefs.getStringSet(String.valueOf(Options.AUTOLOAD_PLUGINS), new HashSet())) {
             try {
                 Class klass = Class.forName(plugin);
                 Constructor constructor = klass.getConstructor(PersistentMap.class);
@@ -91,9 +92,6 @@ public class CoreFragment extends Fragment {
         }
         return rootView;
     }
-    public void connect(long serverID) {
-        // TODO: stuff
-    }
     public void onSubmit(EditText v) {
         // TODO: do stuff
         final Editable text = v.getText();
@@ -101,12 +99,7 @@ public class CoreFragment extends Fragment {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                state.swap(Utils.conjer("input.history", text));
-                final String strText = text.toString();
-                if (strText.startsWith("/")) {
-                    final String[] split = strText.split("\\s+");
-                    Log.d(LOG_TAG, "Parsed: " + Arrays.toString(split));
-                }
+                Core.dispatch(state, text.toString());
             }
         }).start();
 

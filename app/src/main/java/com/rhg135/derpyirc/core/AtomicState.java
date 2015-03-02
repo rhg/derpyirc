@@ -7,24 +7,25 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Created by rhg135 on 01/03/15.
  */
-public class AtomicState {
-    protected final AtomicReference stateRef = new AtomicReference(null);
+public class AtomicState<E> {
+    protected final AtomicReference<E> stateRef = new AtomicReference<E>(null);
 
-    public void set(Object newState) {
+    public void set(E newState) {
         boolean set;
         do {
-            Object oldState = stateRef.get();
+            E oldState = stateRef.get();
             set = stateRef.compareAndSet(oldState, newState);
         } while (!set);
     }
 
-    public Object swap(Function f) {
-        Object oldState = stateRef.get();
-        set(f.apply(oldState));
-        return oldState;
+    public E swap(Function<E, E> f) {
+        final E oldState = stateRef.get();
+        final E newState = f.apply(oldState);
+        set(newState);
+        return newState;
     }
 
-    public Object getState() {
+    public E getState() {
         return stateRef.get();
     }
 }

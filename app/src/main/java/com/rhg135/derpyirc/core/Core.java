@@ -31,5 +31,11 @@ public final class Core {
                 }
             }
         });
+
+        if (commandLine.startsWith("?")) {
+            final String[] macroParts = commandLine.split("\\s+", 1);
+            final String macroName = macroParts[0].substring(1);
+            logger.debug("Dispatching on macro " + macroName);
+        }
     }
 }

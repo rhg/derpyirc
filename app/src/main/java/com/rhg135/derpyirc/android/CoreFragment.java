@@ -28,7 +28,7 @@ import java.util.HashSet;
  */
 public class CoreFragment extends Fragment {
     public static final String LOG_TAG = "DerpyIRCCore";
-    protected final AtomicState state = new AtomicState();
+    protected final AtomicState<PersistentMap<String, Object>> state = new AtomicState<>();
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle bundle) {

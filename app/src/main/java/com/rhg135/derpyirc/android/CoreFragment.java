@@ -41,7 +41,7 @@ public class CoreFragment extends Fragment {
         newState = Persistents.arrayMap();
 
         // load macros
-        newState = Macros.loadDebugMacros(newState);
+        newState = Macros.loadDebugMacros(newState.plus("macros", Persistents.hashMap()));
 
         // set local state
         state.set(newState);

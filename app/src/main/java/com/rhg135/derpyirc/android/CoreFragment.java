@@ -17,8 +17,8 @@ import android.widget.TextView;
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.Persistents;
 import com.google.common.base.Function;
-import com.rhg135.derpyirc.core.AtomicState;
 import com.rhg135.derpyirc.core.Core;
+import com.rhg135.derpyirc.core.HistoricMap;
 import com.rhg135.derpyirc.core.Macros;
 import com.rhg135.derpyirc.core.Options;
 
@@ -32,7 +32,7 @@ import java.util.concurrent.SynchronousQueue;
  */
 public class CoreFragment extends Fragment {
     public static final String LOG_TAG = "DerpyIRCCore";
-    protected final AtomicState<PersistentMap<String, Object>> state = new AtomicState<>();
+    protected final HistoricMap state = new HistoricMap();
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle bundle) {
@@ -47,12 +47,18 @@ public class CoreFragment extends Fragment {
         newState = Macros.loadDebugMacros(newState.plus("macros", Persistents.hashMap()));
 
         // set local state
-        state.set(newState);
+        state.reset(newState);
         Log.d(LOG_TAG, "Set new state to: " + newState.toString());
 
         // preferences
         // NOTE: is this the correct Context?
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        state.swap(new Function<PersistentMap, PersistentMap>() {
+            @Override
+            public PersistentMap apply(PersistentMap input) {
+                return input.plus("config", Persistents.hashMap());
+            }
+        });
 
         // output
         final TextView textView = (TextView) rootView.findViewById(R.id.textView);

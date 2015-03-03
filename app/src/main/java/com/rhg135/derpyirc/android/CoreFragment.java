@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.Persistents;
+import com.google.common.base.Function;
 import com.rhg135.derpyirc.core.AtomicState;
 import com.rhg135.derpyirc.core.Core;
 import com.rhg135.derpyirc.core.Macros;
@@ -23,6 +24,8 @@ import com.rhg135.derpyirc.core.Options;
 
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.concurrent.SynchronousQueue;
 
 /**
  * Created by rhg135 on 28/02/15.
@@ -50,6 +53,9 @@ public class CoreFragment extends Fragment {
         // preferences
         // NOTE: is this the correct Context?
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        // output
+        final TextView textView = (TextView) rootView.findViewById(R.id.textView);
 
         // edit
         final EditText editText = (EditText) rootView.findViewById(R.id.editText);
@@ -95,6 +101,36 @@ public class CoreFragment extends Fragment {
                 Log.e(LOG_TAG, "Plugin: " + plugin + " failed to load.", e);
             }
         }
+
+        // io
+        state.swap(new Function<PersistentMap<String, Object>, PersistentMap<String, Object>>() {
+            @Override
+            public PersistentMap<String, Object> apply(PersistentMap<String, Object> input) {
+                return input.plus("io", Persistents.arrayMap()
+                        .plus("display", new SynchronousQueue<String>()));
+            }
+        });
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    final Map io = (Map) state.getState().get("io");
+                    final SynchronousQueue<String> display = (SynchronousQueue<String>) io.get("display");
+                    try {
+                        final String line = display.take();
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                textView.append(line + "\n");
+                            }
+                        });
+                    } catch (InterruptedException e) {
+                        Log.wtf(LOG_TAG, "What is going on?", e);
+                    }
+                }
+            }
+        }).start();
+
         return rootView;
     }
     public void onSubmit(EditText v) {

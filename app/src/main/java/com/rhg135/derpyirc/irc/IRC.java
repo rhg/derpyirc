@@ -31,7 +31,8 @@ public class IRC {
         globalState.put("irc", Persistents.arrayMap());
 
         final PersistentMap macros = globalState.get("macros");
-        globalState.put("macros", macros.plus("aa51", new Connect()).plus("join", new Join()).plus("part", new Part()));
+        globalState.put("macros", macros.plus("aa51", new Connect()).plus("join", new Join()).plus("part", new Part())
+                .plus("nick", new Nick()));
     }
 
     public static final class Join implements IMacro<Map<String, PersistentMap>> {

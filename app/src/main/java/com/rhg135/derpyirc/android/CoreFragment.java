@@ -126,6 +126,17 @@ public class CoreFragment extends Fragment {
             }
         });
 
+        /*
+        pool.submit(new Runnable() {
+            @Override
+            public void run() {
+                Core.dispatch(state, "/join #abc");
+                Core.dispatch(state, "/aa51");
+                Core.dispatch(state, "/state");
+                Core.dispatch(state, "/join #abc");
+            }
+        }); */
+
         return rootView;
     }
     public void onSubmit(EditText v) {

@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
 
 import static com.rhg135.derpyirc.core.Useful.plusIfNone;
+import static com.rhg135.derpyirc.core.Useful.run;
 
 /**
  * Created by rhg135 on 03/03/15.
@@ -28,37 +28,74 @@ public class IRC {
                 plusIfNone(config, "irc.version", "Derpy IRC 0.0.1");
         globalState.put("config", newConfig);
         globalState.put("bots", Persistents.arrayMap());
+        globalState.put("irc", Persistents.arrayMap());
 
-        globalState.put("macros", globalState.get("macros").plus("aa51", new Connect()));
+        final PersistentMap macros = globalState.get("macros");
+        globalState.put("macros", macros.plus("aa51", new Connect()).plus("join", new Join()).plus("part", new Part()));
     }
 
+    public static final class Join implements IMacro<Map<String, PersistentMap>> {
+        @Override
+        public void macro(final Map<String, PersistentMap> globalState, final String[] commandParts) {
+            run(globalState, new Runnable() {
+                @Override
+                public void run() {
+                    final String currentNetwork = (String) globalState.get("irc").get("current-network");
+                    final PircBotX bot = (PircBotX) globalState.get("bots").get(currentNetwork);
+                    if (bot != null) {
+                        bot.sendIRC().joinChannel(commandParts[1]);
+                    }
+                }
+            });
+        }
+    }
+
+    public static final class Part implements IMacro<Map<String, PersistentMap>> {
+        @Override
+        public void macro(final Map<String, PersistentMap> globalState, final String[] commandParts) {
+            run(globalState, new Runnable() {
+                @Override
+                public void run() {
+                    // TODO: don't be so stateful
+                    final String currentNetwork = (String) globalState.get("irc").get("current-network");
+                    final PircBotX bot = (PircBotX) globalState.get("bots").get(currentNetwork);
+                    if (bot != null) {
+                        bot.sendRaw().rawLine("PART " + commandParts[1] + "\r\n");
+                    }
+                }
+            });
+        }
+    }
     public static final class Connect implements IMacro<Map<String, PersistentMap>> {
         @Override
         public void macro(final Map<String, PersistentMap> globalState, String[] commandParts) {
             // FIXME: don't hardcode details
-            final ExecutorService pool = (ExecutorService) globalState.get("misc").get("pool");
-            pool.submit(new Runnable() {
+            final Configuration config = new Configuration.Builder()
+                    .setRealName("DerpyIRC")
+                    .setServer("chicago.androidarea51.com", 6667)
+                    .setName("derpyirc13" + new Random().nextInt(10))
+                    .addListener(new Adapters(globalState))
+                    .buildConfiguration();
+            final PircBotX bot = new PircBotX(config);
+            final PersistentMap<String, PircBotX> bots = globalState.get("bots");
+            globalState.put("bots", bots.plus("aa51", bot));
+            run(globalState, new Runnable() {
                 @Override
                 public void run() {
-                    final Configuration config = new Configuration.Builder()
-                            .setRealName("DerpyIRC")
-                            .setServer("chicago.androidarea51.com", 6667)
-                            .setName("derpyirc13" + new Random().nextInt(10))
-                            .addListener(new Adapters(globalState))
-                            .buildConfiguration();
-                    final PircBotX bot = new PircBotX(config);
-                    final PersistentMap<Integer, PircBotX> bots = globalState.get("bots");
-                    globalState.put("bots", bots.plus(bot.hashCode(), bot));
                     try {
                         bot.startBot();
                     } catch (IOException e) {
                         logger.error("IO failed", e);
+                        bots.minus("aa51");
+                        globalState.put("bots", bots);
                     } catch (IrcException e) {
                         logger.error("IRC failed", e);
+                        bots.minus("aa51");
+                        globalState.put("bots", bots);
                     }
                 }
             });
-
+            globalState.put("irc", globalState.get("irc").plus("current-network", "aa51"));
         }
     }
 }

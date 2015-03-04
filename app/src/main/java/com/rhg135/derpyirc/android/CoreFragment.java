@@ -120,6 +120,7 @@ public class CoreFragment extends Fragment {
             }
         }).start();
 
+
         return rootView;
     }
     public void onSubmit(EditText v) {

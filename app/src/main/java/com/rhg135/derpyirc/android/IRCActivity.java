@@ -1,6 +1,7 @@
 package com.rhg135.derpyirc.android;
 
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -23,6 +24,9 @@ public class IRCActivity extends ActionBarActivity {
         //preload fragments
         fragments.put("core", new CoreFragment());
         fragments.put("config", new ConfigFragment());
+
+        // I think I know how to thread
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
 
         if (bundle == null) {
             // android fragments

@@ -17,4 +17,13 @@ public class Useful {
             }
         };
     }
+
+    public static PersistentMap plusIfNone(PersistentMap m, Object k, Object v) {
+        final Object o = m.get(k);
+        if (o == null) {
+            return m.plus(k, v);
+        } else {
+            return m;
+        }
+    }
 }

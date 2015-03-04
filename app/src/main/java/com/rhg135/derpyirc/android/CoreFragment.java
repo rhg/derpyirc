@@ -20,6 +20,7 @@ import com.rhg135.derpyirc.core.Core;
 import com.rhg135.derpyirc.core.HistoricMap;
 import com.rhg135.derpyirc.core.Macros;
 import com.rhg135.derpyirc.core.Options;
+import com.rhg135.derpyirc.irc.IRC;
 
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
@@ -31,7 +32,7 @@ import java.util.concurrent.SynchronousQueue;
  */
 public class CoreFragment extends Fragment {
     public static final String LOG_TAG = "DerpyIRCCore";
-    protected final Map<String, Map> state = new HistoricMap();
+    protected final Map<String, PersistentMap> state = new HistoricMap();
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle bundle) {
@@ -80,11 +81,14 @@ public class CoreFragment extends Fragment {
             sendBtn.setVisibility(View.GONE);
         }
 
+        Log.i(LOG_TAG, "Loading IRC plugin");
+        new IRC(state);
+
         // plugins
-        for (String plugin : prefs.getStringSet(String.valueOf(Options.AUTOLOAD_PLUGINS), new HashSet())) {
+        for (String plugin : prefs.getStringSet(String.valueOf(Options.AUTOLOAD_PLUGINS), new HashSet<String>())) {
             try {
                 Class klass = Class.forName(plugin);
-                Constructor constructor = klass.getConstructor(PersistentMap.class);
+                Constructor constructor = klass.getConstructor(Map.class);
                 constructor.newInstance(state);
             } catch (NoSuchMethodException e) {
                 Log.e(LOG_TAG, "Plugin: " + plugin + " has invalid constructor", e);

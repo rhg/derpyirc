@@ -18,7 +18,7 @@ public class Macros {
 
     public static final Logger logger = LoggerFactory.getLogger(Macros.class);
 
-    public static Map loadDebugMacros() {
+    public static PersistentMap loadDebugMacros() {
         return Persistents.hashMap()
                         .plus("state", new StateMacro())
                         .plus("set", new SetCommand());

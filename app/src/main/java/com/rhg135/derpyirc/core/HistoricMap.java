@@ -15,9 +15,11 @@ import java.util.Set;
  * Created by rhg135 on 03/03/15.
  */
 public class HistoricMap<K, V> implements Map<K, V>, IAtomic<PersistentMap<K, V>>, IHistoricMap<K, V> {
-    protected final AtomicState<PersistentMap<K, V>> state = new AtomicState<>();
+    protected final AtomicState<PersistentMap<K, V>> state =
+            new AtomicState<PersistentMap<K, V>>((PersistentMap<K, V>) Persistents.hashMap());
     protected final AtomicState<PersistentVector<PersistentMap<K, V>>> history =
-            new AtomicState<>();
+            new AtomicState<PersistentVector<PersistentMap<K, V>>>(Persistents.<PersistentMap<K, V>>vector());
+
     @Override
     public PersistentMap<K, V> swap(Function<PersistentMap<K, V>, PersistentMap<K, V>> function) {
         return reset(function.apply(getState()));

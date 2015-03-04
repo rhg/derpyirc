@@ -10,6 +10,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AtomicState<S> implements IAtomic<S> {
     protected final AtomicReference<S> stateRef = new AtomicReference<S>(null);
 
+    public AtomicState(S initState) {
+        reset(initState);
+    }
+
     @Override
     public S reset(S newState) {
         boolean set;

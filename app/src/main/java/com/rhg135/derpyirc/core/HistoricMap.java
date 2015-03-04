@@ -3,6 +3,8 @@ package com.rhg135.derpyirc.core;
 import android.support.annotation.NonNull;
 
 import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.PersistentVector;
+import com.github.krukow.clj_ds.Persistents;
 import com.google.common.base.Function;
 
 import java.util.Collection;
@@ -14,15 +16,24 @@ import java.util.Set;
  */
 public class HistoricMap<K, V> implements Map<K, V>, IAtomic<PersistentMap<K, V>> {
     protected final AtomicState<PersistentMap<K, V>> state = new AtomicState<>();
-
+    protected final AtomicState<PersistentVector<PersistentMap<K, V>>> history =
+            new AtomicState<>();
     @Override
     public PersistentMap<K, V> swap(Function<PersistentMap<K, V>, PersistentMap<K, V>> function) {
-        return state.swap(function);
+        return reset(function.apply(getState()));
     }
 
     @Override
     public PersistentMap<K, V> reset(PersistentMap<K, V> newState) {
-        // TODO: history
+        history.swap(new Function<PersistentVector<PersistentMap<K, V>>, PersistentVector<PersistentMap<K, V>>>() {
+            @Override
+            public PersistentVector<PersistentMap<K, V>> apply(PersistentVector<PersistentMap<K, V>> input) {
+                if (input == null) {
+                    input = Persistents.vector();
+                }
+                return input.plus(getState());
+            }
+        });
         return state.reset(newState);
     }
 
@@ -75,7 +86,6 @@ public class HistoricMap<K, V> implements Map<K, V>, IAtomic<PersistentMap<K, V>
 
     @Override
     public V put(final K key, final V value) {
-        // TODO: keep history
         swap(new Function<PersistentMap<K, V>, PersistentMap<K, V>>() {
             @Override
             public PersistentMap<K, V> apply(PersistentMap<K, V> input) {
@@ -116,6 +126,6 @@ public class HistoricMap<K, V> implements Map<K, V>, IAtomic<PersistentMap<K, V>
 
     @Override
     public String toString() {
-        return getState().toString();
+        return getState().plus((K) "history", (V) history.getState()).toString();
     }
 }

@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * Created by rhg135 on 03/03/15.
  */
-public class HistoricMap<K, V> implements Map<K, V>, IAtomic<PersistentMap<K, V>> {
+public class HistoricMap<K, V> implements Map<K, V>, IAtomic<PersistentMap<K, V>>, IHistoricMap<K, V> {
     protected final AtomicState<PersistentMap<K, V>> state = new AtomicState<>();
     protected final AtomicState<PersistentVector<PersistentMap<K, V>>> history =
             new AtomicState<>();
@@ -127,5 +127,38 @@ public class HistoricMap<K, V> implements Map<K, V>, IAtomic<PersistentMap<K, V>
     @Override
     public String toString() {
         return getState().plus((K) "history", (V) history.getState()).toString();
+    }
+
+    @Override
+    public PersistentMap<K, V> lastState() {
+        return history.getState().peek();
+    }
+
+    @Override
+    public IHistoricMap<K, V> lastHistory() {
+        return getHistory(history.getState().minus());
+    }
+
+    protected IHistoricMap<K, V> getHistory(final PersistentVector<PersistentMap<K, V>> v) {
+        return new IHistoricMap<K, V>() {
+            @Override
+            public PersistentMap<K, V> lastState() {
+                // TODO: duplication
+                if (!v.isEmpty()) {
+                    return v.peek();
+                } else {
+                    return null;
+                }
+            }
+
+            @Override
+            public IHistoricMap<K, V> lastHistory() {
+                if (!v.isEmpty()) {
+                    return getHistory(v.minus());
+                } else {
+                    return null;
+                }
+            }
+        };
     }
 }

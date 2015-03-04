@@ -16,7 +16,6 @@ import android.widget.TextView;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.Persistents;
-import com.google.common.base.Function;
 import com.rhg135.derpyirc.core.Core;
 import com.rhg135.derpyirc.core.HistoricMap;
 import com.rhg135.derpyirc.core.Macros;
@@ -32,33 +31,19 @@ import java.util.concurrent.SynchronousQueue;
  */
 public class CoreFragment extends Fragment {
     public static final String LOG_TAG = "DerpyIRCCore";
-    protected final HistoricMap state = new HistoricMap();
+    protected final Map<String, Map> state = new HistoricMap();
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle bundle) {
         View rootView = inflater.inflate(R.layout.fragment_irc, container, false);
 
-        PersistentMap<String, Object> newState;
-
-        // state
-        newState = Persistents.arrayMap();
-
         // load macros
-        newState = Macros.loadDebugMacros(newState.plus("macros", Persistents.hashMap()));
-
-        // set local state
-        state.reset(newState);
-        Log.d(LOG_TAG, "Set new state to: " + newState.toString());
+        state.put("macros", Macros.loadDebugMacros());
 
         // preferences
         // NOTE: is this the correct Context?
+        state.put("config", Persistents.hashMap());
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        state.swap(new Function<PersistentMap, PersistentMap>() {
-            @Override
-            public PersistentMap apply(PersistentMap input) {
-                return input.plus("config", Persistents.hashMap());
-            }
-        });
 
         // output
         final TextView textView = (TextView) rootView.findViewById(R.id.textView);
@@ -109,18 +94,12 @@ public class CoreFragment extends Fragment {
         }
 
         // io
-        state.swap(new Function<PersistentMap<String, Object>, PersistentMap<String, Object>>() {
-            @Override
-            public PersistentMap<String, Object> apply(PersistentMap<String, Object> input) {
-                return input.plus("io", Persistents.arrayMap()
-                        .plus("display", new SynchronousQueue<String>()));
-            }
-        });
+        state.put("io", Persistents.hashMap().plus("display", new SynchronousQueue<String>()));
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (true) {
-                    final Map io = (Map) state.getState().get("io");
+                    final Map io = (Map) state.get("io");
                     final SynchronousQueue<String> display = (SynchronousQueue<String>) io.get("display");
                     try {
                         final String line = display.take();

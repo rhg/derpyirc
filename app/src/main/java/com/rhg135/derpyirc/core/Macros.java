@@ -1,6 +1,7 @@
 package com.rhg135.derpyirc.core;
 
 import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Persistents;
 import com.google.common.base.Function;
 
 import org.slf4j.Logger;
@@ -17,12 +18,10 @@ public class Macros {
 
     public static final Logger logger = LoggerFactory.getLogger(Macros.class);
 
-    public static PersistentMap loadDebugMacros(PersistentMap globalState) {
-        final PersistentMap<String, IMacro<Map>> macrosMap =
-                ((PersistentMap<String, IMacro<Map>>) globalState.get("macros"))
+    public static Map loadDebugMacros() {
+        return Persistents.hashMap()
                         .plus("state", new StateMacro())
                         .plus("set", new SetCommand());
-        return globalState.plus("macros", macrosMap);
     }
 
     public final static class SetCommand implements IMacro<Map> {

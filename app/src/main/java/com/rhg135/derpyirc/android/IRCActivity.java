@@ -1,23 +1,34 @@
 package com.rhg135.derpyirc.android;
 
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.rhg135.derpyirc.core.HistoricMap;
+
+import java.util.Map;
+
 
 public class IRCActivity extends ActionBarActivity {
+    protected final Map<String, Fragment> fragments = new HistoricMap<>();
     public static final String LOG_TAG = "DerpyIRCMain";
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         setContentView(R.layout.activity_irc);
+
+        //preload fragments
+        fragments.put("core", new CoreFragment());
+        fragments.put("config", new ConfigFragment());
+
         if (bundle == null) {
             // android fragments
             Log.d(LOG_TAG, "adding CoreFragment");
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new CoreFragment())
+                    .add(R.id.container, fragments.get("core"))
                     .commit();
         }
     }
@@ -39,6 +50,10 @@ public class IRCActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            final Fragment configFragment = fragments.get("config");
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.container, configFragment)
+                    .commit();
             return true;
         }
 

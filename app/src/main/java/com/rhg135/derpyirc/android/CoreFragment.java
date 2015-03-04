@@ -25,6 +25,8 @@ import com.rhg135.derpyirc.irc.IRC;
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 
 /**
@@ -40,6 +42,10 @@ public class CoreFragment extends Fragment {
 
         // load macros
         state.put("macros", Macros.loadDebugMacros());
+
+        // threading
+        final ExecutorService pool = Executors.newCachedThreadPool();
+        state.put("misc", Persistents.arrayMap().plus("pool", pool));
 
         // preferences
         // NOTE: is this the correct Context?
@@ -99,7 +105,7 @@ public class CoreFragment extends Fragment {
 
         // io
         state.put("io", Persistents.hashMap().plus("display", new SynchronousQueue<String>()));
-        new Thread(new Runnable() {
+        pool.submit(new Runnable() {
             @Override
             public void run() {
                 while (true) {
@@ -118,8 +124,7 @@ public class CoreFragment extends Fragment {
                     }
                 }
             }
-        }).start();
-
+        });
 
         return rootView;
     }
@@ -127,12 +132,13 @@ public class CoreFragment extends Fragment {
         // TODO: do stuff
         final Editable text = v.getText();
         Log.d(LOG_TAG, "Text: " + text);
-        new Thread(new Runnable() {
+        final ExecutorService pool = (ExecutorService) state.get("misc").get("pool");
+        pool.submit(new Runnable() {
             @Override
             public void run() {
                 Core.dispatch(state, text.toString());
             }
-        }).start();
+        });
 
     }
 }

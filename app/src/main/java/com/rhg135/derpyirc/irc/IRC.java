@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
 
 import static com.rhg135.derpyirc.core.Useful.plusIfNone;
 
@@ -35,8 +36,8 @@ public class IRC {
         @Override
         public void macro(final Map<String, PersistentMap> globalState, String[] commandParts) {
             // FIXME: don't hardcode details
-            // TODO: don't thread uncontrolled; a threadpool
-            new Thread(new Runnable() {
+            final ExecutorService pool = (ExecutorService) globalState.get("misc").get("pool");
+            pool.submit(new Runnable() {
                 @Override
                 public void run() {
                     final Configuration config = new Configuration.Builder()
@@ -56,7 +57,7 @@ public class IRC {
                         logger.error("IRC failed", e);
                     }
                 }
-            }).start();
+            });
 
         }
     }

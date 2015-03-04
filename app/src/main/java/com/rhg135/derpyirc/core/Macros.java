@@ -1,10 +1,12 @@
 package com.rhg135.derpyirc.core;
 
 import com.github.krukow.clj_ds.PersistentMap;
+import com.google.common.base.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.SynchronousQueue;
 
@@ -18,29 +20,33 @@ public class Macros {
     public static PersistentMap loadDebugMacros(PersistentMap globalState) {
         final PersistentMap<String, IMacro<Map>> macrosMap =
                 ((PersistentMap<String, IMacro<Map>>) globalState.get("macros"))
-                        .plus("state", new StateMacro());
-        //      .plus("set", new SetCommand());
+                        .plus("state", new StateMacro())
+                        .plus("set", new SetCommand());
         return globalState.plus("macros", macrosMap);
     }
 
-    /*
     public final static class SetCommand implements IMacro<Map> {
         @Override
-        public void macro(AtomicState<Map> globalState, final String[] commandParts) {
+        public void macro(Map globalState, final String[] commandParts) {
             if (commandParts.length == 3) {
-                globalState.swap(new Function<Map, Map>() {
+                // FIXME: cast
+                ((HistoricMap) globalState).swap(new Function<Map, Map>() {
                     @Override
                     public Map apply(Map input) {
                         return Useful.update("config", new Function<Object, Object>() {
                             @Override
                             public Object apply(Object input) {
-                                return ((PersistentMap) input).put(commandParts[1], commandParts[2]);
+                                logger.debug(input.getClass().toString());
+                                // FIXME: cast
+                                return ((PersistentMap) input).plus(commandParts[1], commandParts[2]);
                             }
-                        }).apply((PersistentMap<String, Object>) input);
+                        }).apply((PersistentMap<String, Object>) input); // FIXME: cast
                     }
                 });
             } else {
-                final Map io = (Map) globalState.getState().get("io");
+                // TODO: factor this bit out, I've done this before
+                final Map io = (Map) globalState.get("io");
+                // FIXME: cast
                 final SynchronousQueue<String> display = (SynchronousQueue<String>) io.get("display");
                 try {
                     display.put("Invalid Arguments to SET: " + Arrays.toString(commandParts));
@@ -49,7 +55,7 @@ public class Macros {
                 }
             }
         }
-    }*/
+    }
 
     public final static class StateMacro implements IMacro<Map> {
         @Override

@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/DerpyIRC.iml" filepath="$PROJECT_DIR$/DerpyIRC.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/derpycore/derpycore.iml" filepath="$PROJECT_DIR$/derpycore/derpycore.iml" />
     </modules>
   </component>
 </project>

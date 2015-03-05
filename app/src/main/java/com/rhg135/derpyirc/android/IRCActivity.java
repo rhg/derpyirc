@@ -8,14 +8,14 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.rhg135.derpyirc.core.HistoricMap;
-
+import java.util.HashMap;
 import java.util.Map;
 
 
 public class IRCActivity extends ActionBarActivity {
-    protected final Map<String, Fragment> fragments = new HistoricMap<>();
+    protected final Map<String, Fragment> fragments = new HashMap<>();
     public static final String LOG_TAG = "DerpyIRCMain";
+
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);

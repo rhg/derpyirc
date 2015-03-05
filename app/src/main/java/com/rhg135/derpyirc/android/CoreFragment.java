@@ -14,17 +14,12 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.github.krukow.clj_ds.PersistentMap;
-import com.github.krukow.clj_ds.Persistents;
 import com.rhg135.derpyirc.core.Core;
-import com.rhg135.derpyirc.core.HistoricMap;
-import com.rhg135.derpyirc.core.Macros;
 import com.rhg135.derpyirc.core.Options;
-import com.rhg135.derpyirc.irc.IRC;
+import com.rhg135.derpyirc.core.Useful;
+import com.rhg135.derpyirc.core.structures.IMap;
+import com.rhg135.derpyirc.core.structures.IState;
 
-import java.lang.reflect.Constructor;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
@@ -34,22 +29,19 @@ import java.util.concurrent.SynchronousQueue;
  */
 public class CoreFragment extends Fragment {
     public static final String LOG_TAG = "DerpyIRCCore";
-    protected final Map<String, PersistentMap> state = new HistoricMap();
+    protected final ExecutorService pool = Executors.newCachedThreadPool();
+    protected final SynchronousQueue queue = new SynchronousQueue();
+    protected final IState<IMap> state = Core.newState(new MapProvider(), queue);
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle bundle) {
         View rootView = inflater.inflate(R.layout.fragment_irc, container, false);
 
-        // load macros
-        state.put("macros", Macros.loadDebugMacros());
-
         // threading
-        final ExecutorService pool = Executors.newCachedThreadPool();
-        state.put("misc", Persistents.arrayMap().plus("pool", pool));
+        Useful.put(state, "pool", pool);
 
         // preferences
-        // NOTE: is this the correct Context?
-        state.put("config", Persistents.hashMap());
+        // TODO: don't use android's; it's hidden state
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         // output
@@ -87,9 +79,12 @@ public class CoreFragment extends Fragment {
             sendBtn.setVisibility(View.GONE);
         }
 
+        /* FIXME: fix irc
         Log.i(LOG_TAG, "Loading IRC plugin");
         new IRC(state);
+        */
 
+        /* FIXME: does this even work
         // plugins
         for (String plugin : prefs.getStringSet(String.valueOf(Options.AUTOLOAD_PLUGINS), new HashSet<String>())) {
             try {
@@ -102,17 +97,16 @@ public class CoreFragment extends Fragment {
                 Log.e(LOG_TAG, "Plugin: " + plugin + " failed to load.", e);
             }
         }
+        */
 
         // io
-        state.put("io", Persistents.hashMap().plus("display", new SynchronousQueue<String>()));
         pool.submit(new Runnable() {
             @Override
             public void run() {
                 while (true) {
-                    final Map io = (Map) state.get("io");
-                    final SynchronousQueue<String> display = (SynchronousQueue<String>) io.get("display");
                     try {
-                        final String line = display.take();
+                        // TODO: cast
+                        final String line = (String) queue.take();
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -120,7 +114,7 @@ public class CoreFragment extends Fragment {
                             }
                         });
                     } catch (InterruptedException e) {
-                        Log.wtf(LOG_TAG, "What is going on?", e);
+                        break;
                     }
                 }
             }
@@ -143,7 +137,6 @@ public class CoreFragment extends Fragment {
         // TODO: do stuff
         final Editable text = v.getText();
         Log.d(LOG_TAG, "Text: " + text);
-        final ExecutorService pool = (ExecutorService) state.get("misc").get("pool");
         pool.submit(new Runnable() {
             @Override
             public void run() {

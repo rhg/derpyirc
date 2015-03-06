@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.google.common.base.Function;
@@ -42,7 +43,7 @@ public class CoreFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle bundle) {
-        View rootView = inflater.inflate(R.layout.fragment_irc, container, false);
+        final View rootView = inflater.inflate(R.layout.fragment_irc, container, false);
 
         // threading
         Useful.put(state, "pool", pool);
@@ -117,10 +118,27 @@ public class CoreFragment extends Fragment {
                     try {
                         // TODO: cast
                         final String line = (String) queue.take();
+                        final Object autoScroll = (Useful.object(state, "config", "look.autoscroll"));
+                        final boolean scroll;
+                        if (autoScroll instanceof String) {
+                            scroll = Boolean.parseBoolean((String) autoScroll);
+                        } else {
+                            scroll = true;
+                        }
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 textView.append(line + "\n");
+                                if (scroll) {
+
+                                    final ScrollView scrollView = (ScrollView) rootView.findViewById(R.id.scrollView);
+                                    scrollView.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            scrollView.fullScroll(View.FOCUS_DOWN);
+                                        }
+                                    });
+                                }
                             }
                         });
                     } catch (InterruptedException e) {

@@ -39,6 +39,11 @@ public class MapProvider implements IMapProvider {
             public boolean isEmpty() {
                 return persistentMap.isEmpty();
             }
+
+            @Override
+            public String toString() {
+                return persistentMap.toString();
+            }
         };
     }
 }

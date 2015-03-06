@@ -52,8 +52,10 @@ public final class Core {
         final String[] macroParts;
         if (commandLine.startsWith("?")) {
             macroParts = commandLine.split("\\s+", 1);
-        } else {
+        } else if (commandLine.startsWith("/")) {
             macroParts = commandLine.split("\\s+");
+        } else {
+            macroParts = new String[]{"?say", commandLine};
         }
         final String macroName = macroParts[0].substring(1);
         logger.debug("Dispatching on macro " + macroName);

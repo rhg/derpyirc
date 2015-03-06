@@ -6,6 +6,7 @@ import com.rhg135.derpyirc.core.structures.IState;
 
 import org.slf4j.Logger;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 
 /**
@@ -71,5 +72,19 @@ public class Useful {
 
     public static void log(IMap global, String s) {
 
+    }
+
+    public static IMap remove(IState<IMap> state, final Object key) {
+        state.swap(new Function<IMap, IMap>() {
+            @Override
+            public IMap apply(IMap input) {
+                return input.dissoc(key);
+            }
+        });
+        return state.deref();
+    }
+
+    public static void run(IState<IMap> globalState, Runnable runnable) {
+        ((ExecutorService) object(globalState, "pool")).submit(runnable);
     }
 }

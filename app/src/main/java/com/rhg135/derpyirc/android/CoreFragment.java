@@ -14,11 +14,13 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.common.base.Function;
 import com.rhg135.derpyirc.core.Core;
 import com.rhg135.derpyirc.core.Options;
 import com.rhg135.derpyirc.core.Useful;
 import com.rhg135.derpyirc.core.structures.IMap;
 import com.rhg135.derpyirc.core.structures.IState;
+import com.rhg135.derpyirc.irc.IRC;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,6 +33,11 @@ public class CoreFragment extends Fragment {
     public static final String LOG_TAG = "DerpyIRCCore";
     protected final ExecutorService pool = Executors.newCachedThreadPool();
     protected final SynchronousQueue queue = new SynchronousQueue();
+
+    public IMap getState() {
+        return state.deref();
+    }
+
     protected final IState<IMap> state = Core.newState(new MapProvider(), queue);
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -79,10 +86,13 @@ public class CoreFragment extends Fragment {
             sendBtn.setVisibility(View.GONE);
         }
 
-        /* FIXME: fix irc
         Log.i(LOG_TAG, "Loading IRC plugin");
-        new IRC(state);
-        */
+        state.swap(new Function<IMap, IMap>() {
+            @Override
+            public IMap apply(IMap input) {
+                return IRC.loadPlugin(input, pool, new MapProvider());
+            }
+        });
 
         /* FIXME: does this even work
         // plugins
